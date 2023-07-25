@@ -78,20 +78,37 @@ class Api:
         if req.image is None:
             raise HTTPException(404, 'Image not found')
 
+        if isinstance(req.model, list):
+            if any(i not in utils.interrogators.keys() for i in req.model):
+                raise HTTPException(404, 'Model {i} not found')
+
         if req.model not in utils.interrogators.keys():
             raise HTTPException(404, 'Model not found')
+            req.model = [req.model]
 
         image = decode_base64_to_image(req.image)
-        interrogator = utils.interrogators[req.model]
+        QData.tags.clear()
+        QData.ratings.clear()
+        QData.in_db.clear()
+        QData.for_tags_file.clear()
 
-        with self.queue_lock:
-            QData.tags.clear()
-            QData.ratings.clear()
-            QData.in_db.clear()
-            QData.for_tags_file.clear()
-            data = ('', '', '') + interrogator.interrogate(image)
-            QData.apply_filters(data)
-            output = QData.finalize(1)
+        # allow overriding of default values
+        if req.threshold:
+            QData.threshold = req.threshold
+        if req.tag_frac_threshold:
+            QData.tag_frac_threshold = req.tag_frac_threshold
+        if req.count_threshold:
+            QData.count_threshold = req.count_threshold
+
+        for model in req.model:
+            with self.queue_lock:
+                interrogator = utils.interrogators[model]
+                data = ('', '', '') + interrogator.interrogate(image)
+                QData.apply_filters(data)
+                if req.auto_unload:
+                    interrogator.unload()
+
+        output = QData.finalize(1)
 
         return models.TaggerInterrogateResponse(
             caption={
