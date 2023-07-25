@@ -551,7 +551,8 @@ class QData:
                 tag = cls.correct_tag(tag)
                 if tag not in cls.keep_tags:
                     if cls.is_excluded(tag) or val < cls.threshold:
-                        if tag not in cls.add_tags:
+                        if tag not in cls.add_tags and \
+                           len(cls.discarded_tags) < max_ct:
                             cls.discarded_tags[tag].append(val)
                         continue
                 if data[1] != '':
