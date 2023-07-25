@@ -101,12 +101,12 @@ class Api:
             QData.count_threshold = req.count_threshold
 
         for model in req.model:
+            interrogator = utils.interrogators[model]
             with self.queue_lock:
-                interrogator = utils.interrogators[model]
                 data = ('', '', '') + interrogator.interrogate(image)
-                QData.apply_filters(data)
-                if req.auto_unload:
-                    interrogator.unload()
+            QData.apply_filters(data)
+            if req.auto_unload:
+                interrogator.unload()
 
         output = QData.finalize(1)
 
