@@ -9,34 +9,26 @@ class TaggerInterrogateRequest(sd_models.InterrogateRequest):
     """Interrogate request model"""
     model: str = Field(
         title='Model',
-        description='The interrogate model(s) used. Comma separated.',
+        description='The interrogate model used.',
     )
 
-    threshold: float = Field(
-        default=0.35,
-        title='Threshold',
-        description='',
-        ge=0,
-        le=1
+
+class TaggerQueueImageRequest(sd_models.InterrogateRequest):
+    name: str = Field(
+        title='Name',
+        description='Only queue the image, under this name.',
     )
-    tag_frac_threshold: float = Field(
-        default=0.05,
-        title='Amongst interrogations tag fraction threshold',
-        description='',
-        ge=0,
-        le=1
+
+
+class TaggerBatchRequest(sd_models.InterrogateRequest):
+    """Batch request model"""
+    model: str = Field(
+        title='Model',
+        description='The interrogate model used.',
     )
-    count_threshold: float = Field(
-        default=100,
-        title='Count threshold',
-        description='',
-        ge=1,
-        le=1000000
-    )
-    auto_unload: bool = Field(
-        default=True,
-        title='Auto unload',
-        description='Unload each model after interrogation.'
+    name: str = Field(
+        title='Name',
+        description='name of the last image',
     )
 
 
@@ -44,7 +36,7 @@ class TaggerInterrogateResponse(BaseModel):
     """Interrogate response model"""
     caption: Dict[str, float] = Field(
         title='Caption',
-        description='The generated caption for the image.'
+        description='The generated captions for the image.'
     )
 
 
@@ -53,4 +45,17 @@ class InterrogatorsResponse(BaseModel):
     models: List[str] = Field(
         title='Models',
         description=''
+    )
+
+
+class QueueImageResponse(BaseModel):
+    """Queue image response model"""
+    pass
+
+
+class BatchResponse(BaseModel):
+    """Batch response model"""
+    captions: Dict[str, Dict[str, float]] = Field(
+        title='Captions',
+        description='The generated captions for the images.'
     )

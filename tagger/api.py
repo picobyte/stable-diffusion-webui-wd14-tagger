@@ -11,7 +11,6 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from tagger import utils  # pylint: disable=import-error
 from tagger import api_models as models  # pylint: disable=import-error
-from tagger.uiset import QData  # pylint: disable=import-error
 
 
 class Api:
@@ -28,6 +27,7 @@ class Api:
         self.app = app
         self.queue_lock = qlock
         self.prefix = prefix
+        self.images = {}
 
         self.add_api_route(
             'interrogate',
@@ -44,10 +44,22 @@ class Api:
         )
 
         self.add_api_route(
-            "unload-interrogators",
+            'unload-interrogators',
             self.endpoint_unload_interrogators,
-            methods=["POST"],
+            methods=['POST'],
             response_model=str,
+        )
+        self.add_api_route(
+            'queue-image',
+            self.endpoint_queue_image,
+            methods=['POST'],
+            response_model=models.QueueImageResponse
+        )
+        self.add_api_route(
+            'batch-process',
+            self.endpoint_batch,
+            methods=['POST'],
+            response_model=models.BatchResponse
         )
 
     def auth(self, creds: HTTPBasicCredentials = None):
@@ -75,46 +87,56 @@ class Api:
         return self.app.add_api_route(path, endpoint, **kwargs)
 
     def endpoint_interrogate(self, req: models.TaggerInterrogateRequest):
+        """ one file interrogation """
         if req.image is None:
             raise HTTPException(404, 'Image not found')
 
-        req_models = []
-        for i in map(str.strip, req.model.split(',')):
-            if i in utils.interrogators.keys():
-                req_models.append(i)
-            else:
-                raise HTTPException(404, f"Model '{i}' not found")
+        if req.model not in utils.interrogators:
+            raise HTTPException(404, 'Model not found')
 
         image = decode_base64_to_image(req.image)
-        QData.tags.clear()
-        QData.ratings.clear()
-        QData.in_db.clear()
-        QData.for_tags_file.clear()
+        with self.queue_lock:
+            interrogator = utils.interrogators[req.model]
+            data = interrogator.interrogate(image)
+            res = {**data[0], **data[1]}
 
-        # allow overriding of default values
-        if req.threshold:
-            QData.threshold = req.threshold
-        if req.tag_frac_threshold:
-            QData.tag_frac_threshold = req.tag_frac_threshold
-        if req.count_threshold:
-            QData.count_threshold = req.count_threshold
+        return models.TaggerInterrogateResponse(res)
 
-        for model in req_models:
-            interrogator = utils.interrogators[model]
-            with self.queue_lock:
-                data = ('', '', '') + interrogator.interrogate(image)
-            QData.apply_filters(data)
-            if req.auto_unload:
-                interrogator.unload()
+    def endpoint_queue_image(self, req: models.TaggerInterrogateRequest):
+        """ post image to queue """
+        if req.image is None:
+            raise HTTPException(404, 'Image not found')
 
-        output = QData.finalize(1)
+        # TODO make this a command line option
+        if len(self.images) >= getattr(shared.cmd_opts, 'queue_size', 512):
+            raise HTTPException(429, 'Queue is full')
 
-        return models.TaggerInterrogateResponse(
-            caption={
-                **output[0],
-                **output[1],
-                **output[2],
-            })
+        self.images[req.name] = decode_base64_to_image(req.image)
+
+        return models.TaggerPostImageResponse(True)
+
+    def endpoint_batch(self, req: models.TaggerBatchRequest):
+        """ batch interrogation """
+        if req.image is None:
+            raise HTTPException(404, 'Image not found')
+
+        if req.model not in utils.interrogators:
+            raise HTTPException(404, 'Model not found')
+
+        res = {}
+
+        with self.queue_lock:
+            interrogator = utils.interrogators[req.model]
+            for name, i in self.images.items():
+                res[name] = interrogator.interrogate(i)
+
+            # last image
+            image = decode_base64_to_image(req.image)
+            res[req.name] = interrogator.interrogate(image)
+
+        self.images.clear()
+
+        return models.TaggerBatchResponse(res)
 
     def endpoint_interrogators(self):
         return models.InterrogatorsResponse(
