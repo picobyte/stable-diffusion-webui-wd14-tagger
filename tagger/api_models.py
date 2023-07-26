@@ -11,6 +11,10 @@ class TaggerInterrogateRequest(sd_models.InterrogateRequest):
         title='Model',
         description='The interrogate model used.',
     )
+    threshold: float = Field(
+        title='Threshold',
+        description='The threshold used for the interrogate model.',
+    )
 
 
 class TaggerQueueImageRequest(sd_models.InterrogateRequest):
@@ -29,6 +33,10 @@ class TaggerBatchRequest(sd_models.InterrogateRequest):
     name: str = Field(
         title='Name',
         description='name of the last image',
+    )
+    threshold: float = Field(
+        title='Threshold',
+        description='The threshold used for the interrogate model.',
     )
 
 
