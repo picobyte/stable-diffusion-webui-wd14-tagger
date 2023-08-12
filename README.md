@@ -11,7 +11,7 @@ I didn't make any models, and most of the code was heavily borrowed from the [De
 1. *Extensions* -> *Install from URL* -> Enter URL of this repository -> Press *Install* button
    - or clone this repository under `extensions/`
       ```sh
-      $ git clone https://github.com/toriato/stable-diffusion-webui-wd14-tagger.git extensions/tagger
+      $ git clone https://github.com/picobyte/stable-diffusion-webui-wd14-tagger.git extensions/tagger
       ```
 
 1. *(optional)* Add interrogate model

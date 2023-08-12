@@ -1,8 +1,10 @@
 """ Credits to SmilingWolf """
 
 import tensorflow as tf
-import tensorflow_io as tfio  # pylint: disable=import-error
-
+try:
+    import tensorflow_io as tfio  # pylint: disable=import-error
+except ImportError:
+    tfio = None
 
 def is_webp(contents):
     """Checks if the image is a webp image"""
@@ -104,6 +106,10 @@ class DataGenerator:
 
     def gen_ds(self):
         """ Generates the dataset """
+        if tfio is None:
+            print("Tensorflow IO is not installed, try\n"
+                  "`pip install tensorflow_io' or use another interrogator")
+            return []
         images_list = tf.data.Dataset.from_tensor_slices(self.file_list)
 
         images_data = images_list.map(

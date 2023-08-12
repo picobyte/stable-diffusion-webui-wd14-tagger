@@ -15,5 +15,4 @@ packaging
 pandas
 Pillow
 tensorflow
-tensorflow_io
 tqdm

@@ -3,16 +3,18 @@ import os
 from pathlib import Path
 import io
 import json
+import inspect
+from re import match as re_match
 from platform import system, uname
 from typing import Tuple, List, Dict, Callable
 from pandas import read_csv
 from PIL import Image, UnidentifiedImageError
 from numpy import asarray, float32, expand_dims, exp
 from tqdm import tqdm
-
 from huggingface_hub import hf_hub_download
-from modules import shared  # pylint: disable=import-error
 
+from modules.paths import extensions_dir
+from modules import shared
 from tagger import settings  # pylint: disable=import-error
 from tagger.uiset import QData, IOData  # pylint: disable=import-error
 from . import dbimutils  # pylint: disable=import-error # noqa
@@ -27,21 +29,20 @@ use_cpu = ('all' in shared.cmd_opts.use_cpu) or (
 # https://github.com/toriato/stable-diffusion-webui-wd14-tagger/commit/e4ec460122cf674bbf984df30cdb10b4370c1224#r92654958
 onnxrt_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
 
-if use_cpu:
-    #import gc
+if shared.cmd_opts.device_id is not None:
+    m = re_match(r'([cg])pu:\d+$', shared.cmd_opts.device_id)
+    if m is None:
+        raise ValueError('--device-id is not cpu:<nr> or gpu:<nr>')
+    if m.group(1) == 'c':
+        onnxrt_providers.pop(0)
+    TF_DEVICE_NAME = f'/{shared.cmd_opts.device_id}'
+elif use_cpu:
     TF_DEVICE_NAME = '/cpu:0'
     onnxrt_providers.pop(0)
-    print(f'== WD14 tagger: cpu, {uname()} ==')
 else:
-    #from numba import cuda
     TF_DEVICE_NAME = '/gpu:0'
-    print(f'== WD14 tagger gpu, {uname()} ==')
 
-    if shared.cmd_opts.device_id is not None:
-        try:
-            TF_DEVICE_NAME = f'/gpu:{int(shared.cmd_opts.device_id)}'
-        except ValueError:
-            print('--device-id is not an integer')
+print(f'== WD14 tagger {TF_DEVICE_NAME}, {uname()} ==')
 
 
 class Interrogator:
@@ -135,7 +136,7 @@ class Interrogator:
 
     def interrogate_image(self, image: Image) -> None:
         sha = IOData.get_bytes_hash(image.tobytes())
-        QData.clear(Interrogator.input["cumulative"])
+        QData.clear(1 - Interrogator.input["cumulative"])
 
         fi_key = sha + self.name
         count = 0
@@ -151,7 +152,6 @@ class Interrogator:
             if Interrogator.input["unload_after"]:
                 self.unload()
 
-            QData.query[fi_key] = ('', len(QData.query))
             QData.apply_filters(data)
 
         for got in QData.in_db.values():
@@ -204,11 +204,7 @@ class Interrogator:
 
     def batch_interrogate(self) -> None:
         """ Interrogate all images in the input list """
-        QData.tags.clear()
-        QData.ratings.clear()
-        QData.image_dups.clear()
-        if not Interrogator.input["cumulative"]:
-            QData.in_db.clear()
+        QData.clear(1 - Interrogator.input["cumulative"])
 
         if Interrogator.input["large_query"] is True and self.run_mode < 2:
             # TODO: write specified tags files instead of simple .txt

@@ -5,7 +5,10 @@ from typing import List, Dict
 from pathlib import Path
 
 from modules import shared, scripts  # pylint: disable=import-error
-from preload import default_ddp_path, default_onnx_path  # pylint: disable=E0401 # noqa: E501
+from modules.shared import models_path  # pylint: disable=import-error
+
+default_ddp_path = Path(models_path, 'deepdanbooru')
+default_onnx_path = Path(models_path, 'TaggerOnnx')
 from tagger.preset import Preset  # pylint: disable=import-error
 from tagger.interrogator import Interrogator, DeepDanbooruInterrogator, \
                                 MLDanbooruInterrogator  # pylint: disable=E0401 # noqa: E501
@@ -60,9 +63,12 @@ interrogators: Dict[str, Interrogator] = {
 def refresh_interrogators() -> List[str]:
     """Refreshes the interrogators list"""
     # load deepdanbooru project
-    ddp_path = getattr(shared.cmd_opts, 'deepdanbooru_projects_path',
-                       default_ddp_path)
-    onnx_path = getattr(shared.cmd_opts, 'onnxtagger_path', default_onnx_path)
+    ddp_path = shared.cmd_opts.deepdanbooru_projects_path
+    if ddp_path is None:
+        ddp_path = default_ddp_path
+    onnx_path = shared.cmd_opts.onnxtagger_path
+    if onnx_path is None:
+        onnx_path = default_onnx_path
     os.makedirs(ddp_path, exist_ok=True)
     os.makedirs(onnx_path, exist_ok=True)
 

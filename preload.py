@@ -2,11 +2,6 @@
 from pathlib import Path
 from argparse import ArgumentParser
 
-from modules.shared import models_path  # pylint: disable=import-error
-
-default_ddp_path = Path(models_path, 'deepdanbooru')
-default_onnx_path = Path(models_path, 'TaggerOnnx')
-
 
 def preload(parser: ArgumentParser):
     """ Preload module for DeepDanbooru or onnxtagger. """
@@ -17,12 +12,15 @@ def preload(parser: ArgumentParser):
     parser.add_argument(
         '--deepdanbooru-projects-path',
         type=str,
-        help='Path to directory with DeepDanbooru project(s).',
-        default=default_ddp_path
+        help='Path to directory with DeepDanbooru project(s).'
     )
     parser.add_argument(
         '--onnxtagger-path',
         type=str,
-        help='Path to directory with Onnyx project(s).',
-        default=default_onnx_path
+        help='Path to directory with Onnyx project(s).'
+    )
+    parser.add_argument(
+        '--additional-device-ids',
+        type=str,
+        help='Extra device ID to use. cpu:0,gpu:1..',
     )

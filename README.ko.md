@@ -11,7 +11,7 @@ DeepDanbooru 와 같은 모델을 통해 단일 또는 여러 이미지로부터
 1. *확장기능* -> *URL로부터 확장기능 설치* -> 이 레포지토리 주소 입력 -> *설치*
    - 또는 이 레포지토리를 `extensions/` 디렉터리 내에 클론합니다.
       ```sh
-      $ git clone https://github.com/toriato/stable-diffusion-webui-wd14-tagger.git extensions/tagger
+      $ git clone https://github.com/picobyte/stable-diffusion-webui-wd14-tagger.git extensions/tagger
       ```
 
 1. 모델 추가하기
