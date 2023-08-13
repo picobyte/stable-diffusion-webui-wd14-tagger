@@ -1,0 +1,69 @@
+{
+   "mld-caformer.dec-5-97527" : {
+      "class" : "MLDanbooruInterrogator",
+      "repo_specs" : {
+         "model_path" : "ml_caformer_m36_dec-5-97527.onnx",
+         "name" : "ML-Danbooru Caformer dec-5-97527",
+         "repo_id" : "deepghs/ml-danbooru-onnx"
+      }
+   },
+   "mld-tresnetd.6-30000" : {
+      "class" : "MLDanbooruInterrogator",
+      "repo_specs" : {
+         "model_path" : "TResnet-D-FLq_ema_6-30000.onnx",
+         "name" : "ML-Danbooru TResNet-D 6-30000",
+         "repo_id" : "deepghs/ml-danbooru-onnx"
+      }
+   },
+   "wd-v1-4-moat-tagger.v2" : {
+      "class" : "WaifuDiffusionInterrogator",
+      "repo_specs" : {
+         "name" : "WD14 moat tagger v2",
+         "repo_id" : "SmilingWolf/wd-v1-4-moat-tagger-v2"
+      }
+   },
+   "wd14-convnext.v1" : {
+      "class" : "WaifuDiffusionInterrogator",
+      "repo_specs" : {
+         "name" : "WD14 ConvNeXT v1",
+         "repo_id" : "SmilingWolf/wd-v1-4-convnext-tagger"
+      }
+   },
+   "wd14-convnext.v2" : {
+      "class" : "WaifuDiffusionInterrogator",
+      "repo_specs" : {
+         "name" : "WD14 ConvNeXT v2",
+         "repo_id" : "SmilingWolf/wd-v1-4-convnext-tagger-v2"
+      }
+   },
+   "wd14-convnextv2.v1" : {
+      "remark" : "the repo_id name is misleading, but it's v1",
+      "class" : "WaifuDiffusionInterrogator",
+      "repo_specs" : {
+         "name" : "WD14 ConvNeXTV2 v1",
+         "repo_id" : "SmilingWolf/wd-v1-4-convnextv2-tagger-v2"
+      }
+   },
+   "wd14-swinv2-v1" : {
+      "remark" : "the repo_id name is misleading, but it's v1",
+      "class" : "WaifuDiffusionInterrogator",
+      "repo_specs" : {
+         "name" : "WD14 SwinV2 v1",
+         "repo_id" : "SmilingWolf/wd-v1-4-swinv2-tagger-v2"
+      }
+   },
+   "wd14-vit.v1" : {
+      "class" : "WaifuDiffusionInterrogator",
+      "repo_specs" : {
+         "name" : "WD14 ViT v1",
+         "repo_id" : "SmilingWolf/wd-v1-4-vit-tagger"
+      }
+   },
+   "wd14-vit.v2" : {
+      "class" : "WaifuDiffusionInterrogator",
+      "repo_specs" : {
+         "name" : "WD14 ViT v2",
+         "repo_id" : "SmilingWolf/wd-v1-4-vit-tagger-v2"
+      }
+   }
+}

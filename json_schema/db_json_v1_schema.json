@@ -10,28 +10,28 @@
                     "type": "array",
                     "prefixItems": [
                         {"type": "string" },
-                        {"type": "number", "minimum": 0}
-                    ],
-                    "minContains": 2,
-                    "maxContains": 2
-                }
-            }
-        },
-        "meta": {
-            "type": "object",
-            "properties": {
-              "index_shift": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 16
+                      {"type": "number", "minimum": 0}
+                  ],
+                  "minContains": 2,
+                  "maxContains": 2
               }
+          }
+      },
+      "meta": {
+          "type": "object",
+          "properties": {
+            "index_shift": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 16
             }
-        },
-        "add": { "type": "string" },
-        "exclude": { "type": "string" },
-        "keep": { "type": "string" },
-        "repl": { "type": "string" },
-        "search": { "type": "string" }
+          }
+      },
+      "add": { "type": "string" },
+      "exclude": { "type": "string" },
+      "keep": { "type": "string" },
+      "repl": { "type": "string" },
+      "search": { "type": "string" }
     },
     "required": ["rating", "tag", "query"],
     "additionalProperties": false,

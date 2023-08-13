@@ -106,3 +106,6 @@ class Preset:
             presets.append(self.default_filename)
 
         return presets
+
+
+preset = Preset(Path(__file__).parent.parent.joinpath('presets'))

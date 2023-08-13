@@ -20,9 +20,9 @@ try:
     from modules.call_queue import wrap_gradio_gpu_call
 except ImportError:
     from webui import wrap_gradio_gpu_call  # pylint: disable=import-error
-from tagger import utils  # pylint: disable=import-error
 from tagger.interrogator import Interrogator as It  # pylint: disable=E0401
 from tagger.uiset import IOData, QData  # pylint: disable=import-error
+from tagger.preset import preset
 
 TAG_INPUTS = ["add", "keep", "exclude", "search", "replace"]
 COMMON_OUTPUT = Tuple[
@@ -39,7 +39,7 @@ def unload_interrogators() -> List[str]:
     unloaded_models = 0
     remaining_models = ''
 
-    for i in utils.interrogators.values():
+    for i in It.entries.values():
         if i.unload():
             unloaded_models = unloaded_models + 1
         elif i.model is not None:
@@ -73,7 +73,7 @@ def on_interrogate(
             getattr(QData, "update_" + part)(val)
             It.input[part] = val
 
-    interrogator: It = next((i for i in utils.interrogators.values() if
+    interrogator: It = next((i for i in It.entries.values() if
                              i.name == name), None)
     if interrogator is None:
         return None, None, None, None, None, f"'{name}': invalid interrogator"
@@ -104,7 +104,7 @@ def on_interrogate_image_submit(
 
     if image is None:
         return None, None, None, None, None, 'No image selected'
-    interrogator: It = next((i for i in utils.interrogators.values() if
+    interrogator: It = next((i for i in It.entries.values() if
                              i.name == name), None)
     if interrogator is None:
         return None, None, None, None, None, f"'{name}': invalid interrogator"
@@ -188,13 +188,13 @@ def on_ui_tabs():
                         )
 
                     with gr.TabItem(label='Batch from directory'):
-                        input_glob = utils.preset.component(
+                        input_glob = preset.component(
                             gr.Textbox,
                             value='',
                             label='Input directory - See also settings tab.',
                             placeholder='/path/to/images or to/images/**/*'
                         )
-                        output_dir = utils.preset.component(
+                        output_dir = preset.component(
                             gr.Textbox,
                             value=It.input["output_dir"],
                             label='Output directory',
@@ -208,7 +208,7 @@ def on_ui_tabs():
                         )
                         with gr.Row(variant='compact'):
                             with gr.Column(variant='panel'):
-                                large_query = utils.preset.component(
+                                large_query = preset.component(
                                     gr.Checkbox,
                                     label='huge batch query (TF 2.10, '
                                     'experimental)',
@@ -217,7 +217,7 @@ def on_ui_tabs():
                                     version.parse('2.10')
                                 )
                             with gr.Column(variant='panel'):
-                                save_tags = utils.preset.component(
+                                save_tags = preset.component(
                                     gr.Checkbox,
                                     label='Save to tags files',
                                     value=True
@@ -252,12 +252,8 @@ def on_ui_tabs():
                         )
 
                     with gr.Row(variant='compact'):
-                        def refresh():
-                            utils.refresh_interrogators()
-                            return sorted(x.name for x in utils.interrogators
-                                                               .values())
-                        interrogator_names = refresh()
-                        interrogator = utils.preset.component(
+                        interrogator_names = It.refresh()
+                        interrogator = preset.component(
                             gr.Dropdown,
                             label='Interrogator',
                             choices=interrogator_names,
@@ -271,7 +267,7 @@ def on_ui_tabs():
                         ui.create_refresh_button(
                             interrogator,
                             lambda: None,
-                            lambda: {'choices': refresh()},
+                            lambda: {'choices': It.refresh()},
                             'refresh_interrogator'
                         )
 
@@ -347,7 +343,7 @@ def on_ui_tabs():
                             variant='secondary'
                         )
                     with gr.Column(variant='compact'):
-                        tag_search_selection = utils.preset.component(
+                        tag_search_selection = preset.component(
                             gr.Textbox,
                             label='Multi string search: part1, part2.. '
                                   '(Enter key to update)',
@@ -406,11 +402,11 @@ def on_ui_tabs():
         save_tags.input(fn=IOData.flip_save_tags(), inputs=[], outputs=[])
 
         # Preset and unload buttons
-        selected_preset.change(fn=utils.preset.apply, inputs=[selected_preset],
-                               outputs=[*utils.preset.components, info])
+        selected_preset.change(fn=preset.apply, inputs=[selected_preset],
+                               outputs=[*preset.components, info])
 
-        save_preset_button.click(fn=utils.preset.save, inputs=[selected_preset,
-                                 *utils.preset.components], outputs=[info])
+        save_preset_button.click(fn=preset.save, inputs=[selected_preset,
+                                 *preset.components], outputs=[info])
 
         unload_all_models.click(fn=unload_interrogators, outputs=[info])
 

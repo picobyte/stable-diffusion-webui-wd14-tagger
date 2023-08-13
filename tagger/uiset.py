@@ -17,6 +17,7 @@ from modules import shared  # pylint: disable=import-error
 from modules.deepbooru import re_special  # pylint: disable=import-error
 from tagger import format as tags_format  # pylint: disable=import-error
 from tagger import settings  # pylint: disable=import-error
+from preload import root_dir
 
 Its = settings.InterrogatorSettings
 
@@ -235,8 +236,8 @@ class QData:
     def clear(cls, mode: int) -> None:
         """ clear tags and ratings """
         cls.tags.clear()
-        cls.discarded_tags.clear()
         cls.ratings.clear()
+        cls.discarded_tags.clear()
         cls.for_tags_file.clear()
         if mode > 0:
             cls.in_db.clear()
@@ -397,9 +398,8 @@ class QData:
                 # validate json using either json_schema/db_jon_v1_schema.json
                 # or json_schema/db_jon_v2_schema.json
 
-                schema = Path(__file__).parent.parent.joinpath(
-                    'json_schema', 'db_json_v1_schema.json'
-                )
+                schema = root_dir.joinpath('json_schema',
+                                           'db_json_v1_schema.json')
                 try:
                     data = loads(cls.json_db.read_text())
                     validate(data, loads(schema.read_text()))

@@ -9,9 +9,9 @@ from modules.call_queue import queue_lock  # pylint: disable=import-error
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
-from tagger import utils  # pylint: disable=import-error
 from tagger import api_models as models  # pylint: disable=import-error
 from tagger.uiset import QData  # pylint: disable=import-error
+from tagger.interrogator import Interrogator
 
 
 class Api:
@@ -78,11 +78,11 @@ class Api:
         if req.image is None:
             raise HTTPException(404, 'Image not found')
 
-        if req.model not in utils.interrogators.keys():
+        if req.model not in Interrogator.entries.keys():
             raise HTTPException(404, 'Model not found')
 
         image = decode_base64_to_image(req.image)
-        interrogator = utils.interrogators[req.model]
+        interrogator = Interrogator.entries[req.model]
 
         with self.queue_lock:
             QData.tags.clear()
@@ -102,13 +102,13 @@ class Api:
 
     def endpoint_interrogators(self):
         return models.InterrogatorsResponse(
-            models=list(utils.interrogators.keys())
+            models=list(Interrogator.entries.keys())
         )
 
     def endpoint_unload_interrogators(self):
         unloaded_models = 0
 
-        for i in utils.interrogators.values():
+        for i in Interrogator.entries.values():
             if i.unload():
                 unloaded_models = unloaded_models + 1
 
