@@ -102,7 +102,7 @@ class Api:
                 tag = {k: v for k, v in tag.items() if v > req.threshold}
             res = {**rating, **tag}
 
-        return models.TaggerInterrogateResponse(res)
+        return models.TaggerInterrogateResponse(caption=res)
 
     def endpoint_queue_image(self, req: models.TaggerInterrogateRequest):
         """ post image to queue """
@@ -122,7 +122,7 @@ class Api:
 
         self.images[req.name] = decode_base64_to_image(req.image)
 
-        return models.TaggerQueueImageResponse(True)
+        return models.TaggerQueueImageResponse()
 
     def endpoint_batch(self, req: models.TaggerBatchRequest):
         """ batch interrogation """
@@ -148,7 +148,7 @@ class Api:
 
         self.images.clear()
 
-        return models.TaggerBatchResponse(res)
+        return models.TaggerBatchResponse(captions=res)
 
     def endpoint_interrogators(self):
         return models.TaggerInterrogatorsResponse(
