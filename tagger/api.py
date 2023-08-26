@@ -1,5 +1,5 @@
 """API module for FastAPI"""
-from typing import Callable
+from typing import Callable, Dict, Optional
 from threading import Lock
 from secrets import compare_digest
 
@@ -16,7 +16,7 @@ from tagger import api_models as models  # pylint: disable=import-error
 class Api:
     """Api class for FastAPI"""
     def __init__(
-        self, app: FastAPI, qlock: Lock, prefix: str = None
+        self, app: FastAPI, qlock: Lock, prefix: Optional[str] = None
     ) -> None:
         if shared.cmd_opts.api_auth:
             self.credentials = {}
@@ -27,7 +27,7 @@ class Api:
         self.app = app
         self.queue_lock = qlock
         self.prefix = prefix
-        self.images = {}
+        self.images: Dict[str, object] = {}
 
         self.add_api_route(
             'interrogate',
@@ -62,7 +62,7 @@ class Api:
             response_model=models.BatchResponse
         )
 
-    def auth(self, creds: HTTPBasicCredentials = None):
+    def auth(self, creds: Optional[HTTPBasicCredentials] = None):
         if creds is None:
             creds = Depends(HTTPBasic())
         if creds.username in self.credentials:
