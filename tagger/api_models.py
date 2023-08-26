@@ -48,7 +48,7 @@ class TaggerInterrogateResponse(BaseModel):
     )
 
 
-class InterrogatorsResponse(BaseModel):
+class TaggerInterrogatorsResponse(BaseModel):
     """Interrogators response model"""
     models: List[str] = Field(
         title='Models',
@@ -56,12 +56,12 @@ class InterrogatorsResponse(BaseModel):
     )
 
 
-class QueueImageResponse(BaseModel):
+class TaggerQueueImageResponse(BaseModel):
     """Queue image response model"""
     pass
 
 
-class BatchResponse(BaseModel):
+class TaggerBatchResponse(BaseModel):
     """Batch response model"""
     captions: Dict[str, Dict[str, float]] = Field(
         title='Captions',
