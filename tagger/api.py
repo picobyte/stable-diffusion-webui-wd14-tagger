@@ -97,12 +97,10 @@ class Api:
         image = decode_base64_to_image(req.image)
         with self.queue_lock:
             interrogator = utils.interrogators[req.model]
-            data = interrogator.interrogate(image)
+            rating, tag = interrogator.interrogate(image)
             if req.threshold > 0.0:
-                data[1] = {
-                    k: v for k, v in data[1].items() if v > req.threshold
-                }
-            res = {**data[0], **data[1]}
+                tag = {k: v for k, v in tag.items() if v > req.threshold}
+            res = {**rating, **tag}
 
         return models.TaggerInterrogateResponse(res)
 
@@ -139,12 +137,10 @@ class Api:
         with self.queue_lock:
             interrogator = utils.interrogators[req.model]
             for name, i in self.images.items():
-                data = interrogator.interrogate(i)
+                rating, tag = interrogator.interrogate(i)
                 if req.threshold > 0.0:
-                    data[1] = {
-                        k: v for k, v in data[1].items() if v > req.threshold
-                    }
-                res[name] = {**data[0], **data[1]}
+                    tag = {k: v for k, v in tag.items() if v > req.threshold}
+                res[name] = {**rating, **tag}
 
             # last image
             image = decode_base64_to_image(req.image)
