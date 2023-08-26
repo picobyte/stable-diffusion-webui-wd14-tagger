@@ -1,5 +1,4 @@
 """ Preload module for DeepDanbooru or onnxtagger. """
-from pathlib import Path
 from argparse import ArgumentParser
 
 
@@ -19,8 +18,9 @@ def preload(parser: ArgumentParser):
         type=str,
         help='Path to directory with Onnyx project(s).'
     )
+    # TODO allow using devices in parallel, specified as comma separed list
     parser.add_argument(
         '--additional-device-ids',
         type=str,
-        help='Extra device ID to use. cpu:0,gpu:1..',
+        help='Device ID to use. cpu:0, gpu:0 or gpu:1, etc.',
     )

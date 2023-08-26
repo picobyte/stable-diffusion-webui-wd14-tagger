@@ -27,6 +27,7 @@ from tagger.uiset import IOData, QData  # pylint: disable=import-error
 TAG_INPUTS = ["add", "keep", "exclude", "search", "replace"]
 COMMON_OUTPUT = Tuple[
     Optional[str],               # tags as string
+    Optional[str],               # html tags as string
     Optional[str],               # discarded tags as string
     Optional[Dict[str, float]],  # rating confidences
     Optional[Dict[str, float]],  # tag confidences
@@ -35,7 +36,7 @@ COMMON_OUTPUT = Tuple[
 ]
 
 
-def unload_interrogators() -> List[str]:
+def unload_interrogators() -> Tuple[str]:
     unloaded_models = 0
     remaining_models = ''
 
@@ -52,7 +53,7 @@ def unload_interrogators() -> List[str]:
                            "not be unloaded, a known issue."
     QData.clear(1)
 
-    return [f'{unloaded_models} model(s) unloaded{remaining_models}']
+    return (f'{unloaded_models} model(s) unloaded{remaining_models}',)
 
 
 def on_interrogate(
@@ -65,7 +66,7 @@ def on_interrogate(
         It.input["output_dir"] = output_dir
 
     if len(IOData.err) > 0:
-        return None, None, None, None, None, IOData.error_msg()
+        return (None,) * 6 + (IOData.error_msg(),)
 
     for i, val in enumerate(args):
         part = TAG_INPUTS[i]
@@ -76,7 +77,7 @@ def on_interrogate(
     interrogator: It = next((i for i in utils.interrogators.values() if
                              i.name == name), None)
     if interrogator is None:
-        return None, None, None, None, None, f"'{name}': invalid interrogator"
+        return (None,) * 6 + (f"'{name}': invalid interrogator",)
 
     interrogator.batch_interrogate()
     return search_filter(filt)
@@ -90,7 +91,7 @@ def on_interrogate_image(*args) -> COMMON_OUTPUT:
     # hack brcause image interrogaion occurs twice
     It.odd_increment = It.odd_increment + 1
     if It.odd_increment & 1 == 1:
-        return (None, None, None, None, None, '')
+        return (None,) * 6 + ('',)
     return on_interrogate_image_submit(*args)
 
 
@@ -104,11 +105,11 @@ def on_interrogate_image_submit(
             It.input[part] = val
 
     if image is None:
-        return None, None, None, None, None, 'No image selected'
+        return (None,) * 6 + ('No image selected',)
     interrogator: It = next((i for i in utils.interrogators.values() if
                              i.name == name), None)
     if interrogator is None:
-        return None, None, None, None, None, f"'{name}': invalid interrogator"
+        return (None,) * 6 + (f"'{name}': invalid interrogator",)
 
     interrogator.interrogate_image(image)
     return search_filter(filt)
@@ -155,18 +156,18 @@ def search_filter(filt: str) -> COMMON_OUTPUT:
     """ filters the tags and lost tags for the search field """
     ratings, tags, lost, info = It.output
     if ratings is None:
-        return (None, None, None, None, None, info)
+        return (None,) * 6 + (info,)
     if filt:
         re_part = re.compile('(' + re.sub(', ?', '|', filt) + ')')
         tags = {k: v for k, v in tags.items() if re_part.search(k)}
         lost = {k: v for k, v in lost.items() if re_part.search(k)}
 
-    tags_str = ', '.join(f'<a href="javascript:tag_clicked(\'{html_esc(k)}\','
-                         f'true)">{k}</a>' for k, v in tags.items())
-    lost_str = ', '.join(f'<a href="javascript:tag_clicked(\'{html_esc(k)}\','
-                         f'false)">{k}</a>' for k, v in lost.items())
+    h_tags = ', '.join(f'<a href="javascript:tag_clicked(\'{html_esc(k)}\','
+                       f'true)">{k}</a>' for k in tags.keys())
+    h_lost = ', '.join(f'<a href="javascript:tag_clicked(\'{html_esc(k)}\','
+                       f'false)">{k}</a>' for k in lost.keys())
 
-    return (tags_str, lost_str, ratings, tags, lost, info)
+    return (', '.join(tags.keys()), h_tags, h_lost, ratings, tags, lost, info)
 
 
 def on_ui_tabs():
@@ -196,7 +197,8 @@ def on_ui_tabs():
                         input_glob = utils.preset.component(
                             gr.Textbox,
                             value='',
-                            label='Input directory - See also settings tab.',
+                            label='Input directory - To recurse use ** or */* '
+                                  'in your glob; also check the settings tab.',
                             placeholder='/path/to/images or to/images/**/*'
                         )
                         output_dir = utils.preset.component(
@@ -360,7 +362,8 @@ def on_ui_tabs():
                 with gr.Tabs():
                     with gr.TabItem(label='Ratings and included tags'):
                         # clickable tags to populate excluded tags
-                        tags = gr.HTML(
+                        tags = gr.State(value="")
+                        html_tags = gr.HTML(
                             label='Tags',
                             elem_id='tags',
                         )
@@ -443,7 +446,7 @@ def on_ui_tabs():
 
         tab_gallery.select(fn=on_gallery, inputs=[], outputs=[gallery])
 
-        common_output = [tags, discarded_tags, rating_confidences,
+        common_output = [tags, html_tags, discarded_tags, rating_confidences,
                          tag_confidences, excluded_tag_confidences, info]
 
         # search input textbox
@@ -466,13 +469,11 @@ def on_ui_tabs():
                        [tag_input[tag] for tag in TAG_INPUTS]
 
         # interrogation events
-        image_submit.click(
-            fn=wrap_gradio_gpu_call(on_interrogate_image_submit),
-            inputs=[image] + common_input, outputs=common_output)
+        image_submit.click(fn=wrap_gradio_gpu_call(on_interrogate_image_submit),
+             inputs=[image] + common_input, outputs=common_output)
 
-        image.change(
-            fn=wrap_gradio_gpu_call(on_interrogate_image),
-            inputs=[image] + common_input, outputs=common_output)
+        image.change(fn=wrap_gradio_gpu_call(on_interrogate_image),
+             inputs=[image] + common_input, outputs=common_output)
 
         batch_submit.click(fn=wrap_gradio_gpu_call(on_interrogate),
                            inputs=[input_glob, output_dir] + common_input,

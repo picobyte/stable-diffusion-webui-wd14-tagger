@@ -1,4 +1,30 @@
-# v1.1.1
+# v1.1.2 (2023-08-26)
+
+Explain recursive path usage better in ui
+Fix sending tags via buttons to txt2img and img2img
+type additions, inadvertently pushed, later retouched.
+allow setting gpu device via flag
+Fix inverted cumulative checkbox
+wrap_gradio_gpu_call fallback
+Fix for preload shared access
+preload update
+A few ui changes
+Fix not clearing the tags after writing them to files
+Fix: Tags were still added, beyond count threshold
+fix search/replace bug
+(here int based weights were reverted)
+circumvent when unable to load tensorflow
+fix for too many exclude_tags
+add db.json validation schema, add schema validation
+return fix for fastapi
+pick up huggingface cache dir from env, with default, configurable also via settings.
+leave tensorflow requirements to the user.
+Fix for Reappearance of gradio bug: duplicate image edit
+(index based weights, but later reverted)
+Instead of cache_dir use local_dir, leav
+
+
+# v1.1.1 eada050 (2023-07-20) 
 
 Internal cleanup, no separate interrogation for inverse
 Fix issues with search and sending selection to keep/exclude
@@ -11,7 +37,9 @@ fix some hf download issues
 fixes for fastapi
 added ML-Danbooru support, thanks to [CCRcmcpe](github.com/CCRcmcpe)
 
-# v1.1.0
+
+# v1.1.0 87706b7 (2023-07-16)
+
 fix: failed to install onnxruntime package on MacOS thanks to heady713
 fastapi: remote unload model, picked up from [here](https://github.com/toriato/stable-diffusion-webui-wd14-tagger/pull/109)
 attribute error fix from aria1th also reported by yjunej
@@ -39,7 +67,7 @@ changed internal error handling, It is a bit quirky, which I intend to fix, stil
 If you find it keeps complaining about an input field without reason, just try editing that one again (e.g. add a space there and remove it).
 
 
-# v1.0.0
+# v1.0.0 a1b59d6 (2023-07-10)
 
 You may have to remove the presets/default.json and save a new one.witth your desired defaults. Otherwise checkboxes may not have the right default values.
 

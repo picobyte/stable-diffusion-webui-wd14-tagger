@@ -29,13 +29,13 @@ use_cpu = ('all' in shared.cmd_opts.use_cpu) or (
 # https://github.com/toriato/stable-diffusion-webui-wd14-tagger/commit/e4ec460122cf674bbf984df30cdb10b4370c1224#r92654958
 onnxrt_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
 
-if shared.cmd_opts.device_id is not None:
-    m = re_match(r'([cg])pu:\d+$', shared.cmd_opts.device_id)
+if shared.cmd_opts.additional_device_ids is not None:
+    m = re_match(r'([cg])pu:\d+$', shared.cmd_opts.additional_device_ids)
     if m is None:
         raise ValueError('--device-id is not cpu:<nr> or gpu:<nr>')
     if m.group(1) == 'c':
         onnxrt_providers.pop(0)
-    TF_DEVICE_NAME = f'/{shared.cmd_opts.device_id}'
+    TF_DEVICE_NAME = f'/{shared.cmd_opts.additional_device_ids}'
 elif use_cpu:
     TF_DEVICE_NAME = '/cpu:0'
     onnxrt_providers.pop(0)
