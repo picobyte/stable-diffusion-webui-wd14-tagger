@@ -115,6 +115,13 @@ class Api:
         if len(self.images) >= getattr(shared.cmd_opts, 'queue_size', 512):
             raise HTTPException(429, 'Queue is full')
 
+        # clobber existing image
+        if req.name in self.images:
+            i = 0
+            while f'{req.name}.{i}' in self.images:
+                i = i + 1
+            req.name = f'{req.name}.{i}'
+
         self.images[req.name] = decode_base64_to_image(req.image)
 
         return models.TaggerQueueImageResponse(True)
