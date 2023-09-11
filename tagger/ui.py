@@ -8,8 +8,7 @@ from packaging import version
 try:
     from tensorflow import __version__ as tf_version
 except ImportError:
-    def tf_version():
-        return '0.0.0'
+    tf_version = '0.0.0'
 
 from html import escape as html_esc
 
