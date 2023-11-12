@@ -57,6 +57,11 @@ interrogators: Dict[str, Interrogator] = {
         repo_id='deepghs/ml-danbooru-onnx',
         model_path='TResnet-D-FLq_ema_6-30000.onnx'
     ),
+    'Z3D-E621-Convnext': Z3DInterrogator(
+        'Z3D-E621-Convnext',
+        repo_id='toynya/Z3D-E621-Convnext',
+        model_path='model.onnx'
+    ),
 }
 
 
