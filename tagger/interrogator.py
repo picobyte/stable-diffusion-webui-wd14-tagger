@@ -658,3 +658,225 @@ class MLDanbooruInterrogator(Interrogator):
 
     def large_batch_interrogate(self, images: List, dry_run=False) -> str:
         raise NotImplementedError()
+
+
+class Z3DInterrogator(Interrogator):
+    """ Interrogator for Z3D Waifu Diffusion models """
+    def __init__(
+        self,
+        name: str,
+        model_path='model.onnx',
+        tags_path='tags-selected.csv',
+        repo_id=None,
+        is_hf=True,
+    ) -> None:
+        super().__init__(name)
+        self.repo_id = repo_id
+        self.model_path = model_path
+        self.tags_path = tags_path
+        self.tags = None
+        self.model = None
+        self.tags = None
+        self.local_model = None
+        self.local_tags = None
+        self.is_hf = is_hf
+
+    def download(self) -> None:
+        mdir = Path(shared.models_path, 'interrogators')
+        if self.is_hf:
+            cache = getattr(shared.opts, 'tagger_hf_cache_dir', Its.hf_cache)
+            print(f"Loading {self.name} model file from {self.repo_id}, "
+                  f"{self.model_path}")
+
+            model_path = hf_hub_download(
+                repo_id=self.repo_id,
+                filename=self.model_path,
+                cache_dir=cache)
+            tags_path = hf_hub_download(
+                repo_id=self.repo_id,
+                filename=self.tags_path,
+                cache_dir=cache)
+        else:
+            model_path = self.local_model
+            tags_path = self.local_tags
+
+        download_model = {
+            'name': self.name,
+            'model_path': model_path,
+            'tags_path': tags_path,
+        }
+        mpath = Path(mdir, 'model.json')
+
+        data = [download_model]
+
+        if not os.path.exists(mdir):
+            os.mkdir(mdir)
+
+        elif os.path.exists(mpath):
+            with io.open(file=mpath, mode='r', encoding='utf-8') as filename:
+                try:
+                    data = json.load(filename)
+                    # No need to append if it's already contained
+                    if download_model not in data:
+                        data.append(download_model)
+                except json.JSONDecodeError as err:
+                    print(f'Adding download_model {mpath} raised {repr(err)}')
+                    data = [download_model]
+
+        with io.open(mpath, 'w', encoding='utf-8') as filename:
+            json.dump(data, filename)
+        return model_path, tags_path
+
+    def load(self) -> None:
+        model_path, tags_path = self.download()
+        ort = get_onnxrt()
+        self.model = ort.InferenceSession(model_path,
+                                          providers=onnxrt_providers)
+
+        print(f'Loaded {self.name} model from {self.repo_id}')
+        self.tags = read_csv(tags_path)
+
+    def interrogate(
+        self,
+        image: Image
+    ) -> Tuple[
+        Dict[str, float],  # rating confidences
+        Dict[str, float]  # tag confidences
+    ]:
+        # init model
+        if self.model is None:
+            self.load()
+
+        # code for converting the image and running the model is taken from the
+        # link below. thanks, SmilingWolf!
+        # https://huggingface.co/spaces/SmilingWolf/wd-v1-4-tags/blob/main/app.py
+
+        # convert an image to fit the model
+        _, height, _, _ = self.model.get_inputs()[0].shape
+
+        # alpha to white
+        image = dbimutils.fill_transparent(image)
+
+        image = asarray(image)
+        # PIL RGB to OpenCV BGR
+        image = image[:, :, ::-1]
+
+        tags = dict
+
+        image = dbimutils.make_square(image, height)
+        image = dbimutils.smart_resize(image, height)
+        image = image.astype(float32)
+        image = expand_dims(image, 0)
+
+        # evaluate model
+        input_name = self.model.get_inputs()[0].name
+        label_name = self.model.get_outputs()[0].name
+        confidences = self.model.run([label_name], {input_name: image})[0]
+
+        tags = self.tags[:][['name']]
+        tags['confidences'] = confidences[0]
+
+        # first 4 items are for rating (Safe, Questionable, Explicit)
+        ratings = dict(tags[:0].values)
+
+        # rest are regular tags
+        tags = dict(tags[0:].values)
+
+        return ratings, tags
+
+    def dry_run(self, images) -> Tuple[str, Callable[[str], None]]:
+
+        def process_images(filepaths, _):
+            lines = []
+            for image_path in filepaths:
+                image_path = image_path.numpy().decode("utf-8")
+                lines.append(f"{image_path}\n")
+            with io.open("dry_run_read.txt", "a", encoding="utf-8") as filen:
+                filen.writelines(lines)
+
+        scheduled = [f"{image_path}\n" for image_path in images]
+
+        # Truncate the file from previous runs
+        print("updating dry_run_read.txt")
+        io.open("dry_run_read.txt", "w", encoding="utf-8").close()
+        with io.open("dry_run_scheduled.txt", "w", encoding="utf-8") as filen:
+            filen.writelines(scheduled)
+        return process_images
+
+    def run(self, images, pred_model) -> Tuple[str, Callable[[str], None]]:
+        threshold = QData.threshold
+        self.tags["sanitized_name"] = self.tags["name"].map(
+            lambda i: i if i in Its.kaomojis else i.replace("_", " ")
+        )
+
+        def process_images(filepaths, images):
+            preds = pred_model(images).numpy()
+
+            for ipath, pred in zip(filepaths, preds):
+                ipath = ipath.numpy().decode("utf-8")
+
+                self.tags["preds"] = pred
+                generic = self.tags[self.tags["rating"] == 0]
+                chosen = generic[generic["preds"] > threshold]
+                chosen = chosen.sort_values(by="preds", ascending=False)
+                tags_names = chosen["sanitized_name"]
+
+                key = ipath.split("/")[-1].split(".")[0] + "_" + self.name
+                QData.add_tags = tags_names
+                QData.apply_filters((ipath, '', {}, {}), key, False)
+
+                tags_string = ", ".join(tags_names)
+                txtfile = Path(ipath).with_suffix(".txt")
+                with io.open(txtfile, "w", encoding="utf-8") as filename:
+                    filename.write(tags_string)
+        return images, process_images
+
+    def large_batch_interrogate(self, images, dry_run=True) -> None:
+        """ Interrogate a large batch of images. """
+
+        # init model
+        if not hasattr(self, 'model') or self.model is None:
+            self.load()
+
+        os.environ["TF_XLA_FLAGS"] = '--tf_xla_auto_jit=2 '\
+                                     '--tf_xla_cpu_global_jit'
+        # Reduce logging
+        # os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
+
+        import tensorflow as tf
+
+        from tagger.generator.tf_data_reader import DataGenerator
+
+        # tensorflow maps nearly all vram by default, so we limit this
+        # https://www.tensorflow.org/guide/gpu#limiting_gpu_memory_growth
+        # TODO: only run on the first run
+        gpus = tf.config.experimental.list_physical_devices("GPU")
+        if gpus:
+            for device in gpus:
+                try:
+                    tf.config.experimental.set_memory_growth(device, True)
+                except RuntimeError as err:
+                    print(err)
+
+        if dry_run:  # dry run
+            height, width = 224, 224
+            process_images = self.dry_run(images)
+        else:
+            _, height, width, _ = self.model.inputs[0].shape
+
+            @tf.function
+            def pred_model(model):
+                return self.model(model, training=False)
+
+            process_images = self.run(images, pred_model)
+
+        generator = DataGenerator(
+            file_list=images, target_height=height, target_width=width,
+            batch_size=getattr(shared.opts, 'tagger_batch_size', 1024)
+        ).gen_ds()
+
+        orig_add_tags = QData.add_tags
+        for filepaths, image_list in tqdm(generator):
+            process_images(filepaths, image_list)
+        QData.add_tag = orig_add_tags
+        del os.environ["TF_XLA_FLAGS"]
