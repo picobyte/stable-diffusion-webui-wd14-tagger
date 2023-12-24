@@ -107,7 +107,7 @@ def refresh_interrogators() -> List[str]:
         csv.sort(key=tag_select_csvs_up_front)
         tags_path = Path(path, csv[0])
 
-        if path.name not in interrogators:
+        if path.name not in interrogators.keys():
             if path.name == 'wd-v1-4-convnextv2-tagger-v2':
                 interrogators[path.name] = WaifuDiffusionInterrogator(
                     path.name,
@@ -118,8 +118,17 @@ def refresh_interrogators() -> List[str]:
                 interrogators[path.name] = WaifuDiffusionInterrogator(
                     'Z3D-E621-Convnext', is_hf=False)
             else:
-                raise NotImplementedError(f"Add {path.name} resolution similar"
-                                          "to above here")
+                try:
+                  interrogators[path.name] = WaifuDiffusionInterrogator(
+                    name=path.name,
+                    model_path=str(local_path),
+                    tags_path=str(tags_path),
+                    is_hf=False,
+                  )
+                except:
+                    raise NotImplementedError(
+                        f"Add {path.name} resolution similar to above here"
+                    )
 
         interrogators[path.name].local_model = str(local_path)
         interrogators[path.name].local_tags = str(tags_path)
