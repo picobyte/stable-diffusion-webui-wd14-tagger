@@ -60,7 +60,6 @@ interrogators: Dict[str, Interrogator] = {
 }
 
 
-
 def refresh_interrogators() -> List[str]:
     """Refreshes the interrogators list"""
     # load deepdanbooru project
@@ -111,12 +110,13 @@ def refresh_interrogators() -> List[str]:
         if path.name not in interrogators.keys():
             if path.name == 'wd-v1-4-convnextv2-tagger-v2':
                 interrogators[path.name] = WaifuDiffusionInterrogator(
-                    path.name, repo_id='SmilingWolf/SW-CV-ModelZoo', is_hf=False
+                    path.name, 
+                    repo_id='SmilingWolf/SW-CV-ModelZoo', 
+                    is_hf=False
                 )
             elif path.name == 'Z3D-E621-Convnext':
                 interrogators[path.name] = WaifuDiffusionInterrogator(
-                    'Z3D-E621-Convnext', is_hf=False
-                )
+                    'Z3D-E621-Convnext', is_hf=False)
             else:
                 try:
                   interrogators[path.name] = WaifuDiffusionInterrogator(
