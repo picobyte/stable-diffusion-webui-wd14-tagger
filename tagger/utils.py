@@ -17,46 +17,43 @@ from tagger.interrogator import WaifuDiffusionInterrogator  # pylint: disable=E0
 preset = Preset(Path(scripts.basedir(), 'presets'))
 
 interrogators: Dict[str, Interrogator] = {
-    'wd14-vit.v1': WaifuDiffusionInterrogator(
-        'WD14 ViT v1',
-        repo_id='SmilingWolf/wd-v1-4-vit-tagger'
-    ),
-    'wd14-vit.v2': WaifuDiffusionInterrogator(
-        'WD14 ViT v2',
-        repo_id='SmilingWolf/wd-v1-4-vit-tagger-v2',
-    ),
-    'wd14-convnext.v1': WaifuDiffusionInterrogator(
-        'WD14 ConvNeXT v1',
-        repo_id='SmilingWolf/wd-v1-4-convnext-tagger'
-    ),
-    'wd14-convnext.v2': WaifuDiffusionInterrogator(
-        'WD14 ConvNeXT v2',
-        repo_id='SmilingWolf/wd-v1-4-convnext-tagger-v2',
-    ),
-    'wd14-convnextv2.v1': WaifuDiffusionInterrogator(
-        'WD14 ConvNeXTV2 v1',
-        # the name is misleading, but it's v1
-        repo_id='SmilingWolf/wd-v1-4-convnextv2-tagger-v2',
-    ),
-    'wd14-swinv2-v1': WaifuDiffusionInterrogator(
-        'WD14 SwinV2 v1',
-        # again misleading name
-        repo_id='SmilingWolf/wd-v1-4-swinv2-tagger-v2',
-    ),
-    'wd-v1-4-moat-tagger.v2': WaifuDiffusionInterrogator(
-        'WD14 moat tagger v2',
-        repo_id='SmilingWolf/wd-v1-4-moat-tagger-v2'
-    ),
-    'mld-caformer.dec-5-97527': MLDanbooruInterrogator(
-        'ML-Danbooru Caformer dec-5-97527',
-        repo_id='deepghs/ml-danbooru-onnx',
-        model_path='ml_caformer_m36_dec-5-97527.onnx'
-    ),
-    'mld-tresnetd.6-30000': MLDanbooruInterrogator(
-        'ML-Danbooru TResNet-D 6-30000',
-        repo_id='deepghs/ml-danbooru-onnx',
-        model_path='TResnet-D-FLq_ema_6-30000.onnx'
-    ),
+    # "wd14-vit.v1": WaifuDiffusionInterrogator(
+    #     "WD14 ViT v1", repo_id="SmilingWolf/wd-v1-4-vit-tagger"
+    # ),
+    # "wd14-vit.v2": WaifuDiffusionInterrogator(
+    #     "WD14 ViT v2",
+    #     repo_id="SmilingWolf/wd-v1-4-vit-tagger-v2",
+    # ),
+    # "wd14-convnext.v1": WaifuDiffusionInterrogator(
+    #     "WD14 ConvNeXT v1", repo_id="SmilingWolf/wd-v1-4-convnext-tagger"
+    # ),
+    # "wd14-convnext.v2": WaifuDiffusionInterrogator(
+    #     "WD14 ConvNeXT v2",
+    #     repo_id="SmilingWolf/wd-v1-4-convnext-tagger-v2",
+    # ),
+    # "wd14-convnextv2.v1": WaifuDiffusionInterrogator(
+    #     "WD14 ConvNeXTV2 v1",
+    #     # the name is misleading, but it's v1
+    #     repo_id="SmilingWolf/wd-v1-4-convnextv2-tagger-v2",
+    # ),
+    # "wd14-swinv2-v1": WaifuDiffusionInterrogator(
+    #     "WD14 SwinV2 v1",
+    #     # again misleading name
+    #     repo_id="SmilingWolf/wd-v1-4-swinv2-tagger-v2",
+    # ),
+    # "wd-v1-4-moat-tagger.v2": WaifuDiffusionInterrogator(
+    #     "WD14 moat tagger v2", repo_id="SmilingWolf/wd-v1-4-moat-tagger-v2"
+    # ),
+    # "mld-caformer.dec-5-97527": MLDanbooruInterrogator(
+    #     "ML-Danbooru Caformer dec-5-97527",
+    #     repo_id="deepghs/ml-danbooru-onnx",
+    #     model_path="ml_caformer_m36_dec-5-97527.onnx",
+    # ),
+    # "mld-tresnetd.6-30000": MLDanbooruInterrogator(
+    #     "ML-Danbooru TResNet-D 6-30000",
+    #     repo_id="deepghs/ml-danbooru-onnx",
+    #     model_path="TResnet-D-FLq_ema_6-30000.onnx",
+    # ),
 }
 
 
@@ -107,19 +104,30 @@ def refresh_interrogators() -> List[str]:
         csv.sort(key=tag_select_csvs_up_front)
         tags_path = Path(path, csv[0])
 
-        if path.name not in interrogators:
-            if path.name == 'wd-v1-4-convnextv2-tagger-v2':
-                interrogators[path.name] = WaifuDiffusionInterrogator(
-                    path.name,
-                    repo_id='SmilingWolf/SW-CV-ModelZoo',
-                    is_hf=False
+        if path.name not in interrogators.keys():
+            # if path.name == "wd-v1-4-convnextv2-tagger-v2":
+            #     interrogators[path.name] = WaifuDiffusionInterrogator(
+            #         path.name, repo_id="SmilingWolf/SW-CV-ModelZoo", is_hf=False
+            #     )
+            # elif path.name == "Z3D-E621-Convnext":
+            #     interrogators[path.name] = WaifuDiffusionInterrogator(
+            #         "Z3D-E621-Convnext", is_hf=False
+            #     )
+            # else:
+            #     raise NotImplementedError(
+            #         f"Add {path.name} resolution similar to above here"
+            #     )
+            try:
+              interrogators[path.name] = WaifuDiffusionInterrogator(
+                name=path.name,
+                model_path=str(local_path),
+                tags_path=str(tags_path),
+                is_hf=False,
+              )
+            except:
+                raise NotImplementedError(
+                    f"Add {path.name} resolution similar to above here"
                 )
-            elif path.name == 'Z3D-E621-Convnext':
-                interrogators[path.name] = WaifuDiffusionInterrogator(
-                    'Z3D-E621-Convnext', is_hf=False)
-            else:
-                raise NotImplementedError(f"Add {path.name} resolution similar"
-                                          "to above here")
 
         interrogators[path.name].local_model = str(local_path)
         interrogators[path.name].local_tags = str(tags_path)
