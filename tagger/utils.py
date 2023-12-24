@@ -110,8 +110,8 @@ def refresh_interrogators() -> List[str]:
         if path.name not in interrogators.keys():
             if path.name == 'wd-v1-4-convnextv2-tagger-v2':
                 interrogators[path.name] = WaifuDiffusionInterrogator(
-                    path.name, 
-                    repo_id='SmilingWolf/SW-CV-ModelZoo', 
+                    path.name,
+                    repo_id='SmilingWolf/SW-CV-ModelZoo',
                     is_hf=False
                 )
             elif path.name == 'Z3D-E621-Convnext':
