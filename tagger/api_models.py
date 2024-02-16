@@ -5,7 +5,7 @@ from modules.api import models as sd_models  # pylint: disable=E0401
 from pydantic import BaseModel, Field
 
 
-class TaggerInterrogateRequest(sd_models.InterrogateRequest):
+class TaggerInterrogateRequest(sd_models.ReqInterrogate):
     """Interrogate request model"""
     model: str = Field(
         title='Model',
