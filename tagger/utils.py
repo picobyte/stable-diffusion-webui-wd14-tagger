@@ -47,6 +47,18 @@ interrogators: Dict[str, Interrogator] = {
         'WD14 moat tagger v2',
         repo_id='SmilingWolf/wd-v1-4-moat-tagger-v2'
     ),
+    'wd-v1-4-vit-tagger.v3': WaifuDiffusionInterrogator(
+        'WD14 ViT v3',
+        repo_id='SmilingWolf/wd-vit-tagger-v3'
+    ),
+    'wd-v1-4-convnext-tagger.v3': WaifuDiffusionInterrogator(
+        'WD14 ConvNext v3',
+        repo_id='SmilingWolf/wd-convnext-tagger-v3'
+    ),
+    'wd-v1-4-swinv2-tagger.v3': WaifuDiffusionInterrogator(
+        'WD14 SwinV2 v3',
+        repo_id='SmilingWolf/wd-swinv2-tagger-v3'
+    ),
     'mld-caformer.dec-5-97527': MLDanbooruInterrogator(
         'ML-Danbooru Caformer dec-5-97527',
         repo_id='deepghs/ml-danbooru-onnx',
