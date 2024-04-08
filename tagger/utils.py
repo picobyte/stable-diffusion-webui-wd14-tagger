@@ -123,6 +123,7 @@ def refresh_interrogators() -> List[str]:
 
         interrogators[path.name].local_model = str(local_path)
         interrogators[path.name].local_tags = str(tags_path)
+        interrogators[path.name].is_hf = False
 
     return sorted(interrogators.keys())
 
