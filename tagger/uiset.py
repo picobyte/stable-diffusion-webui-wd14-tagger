@@ -338,6 +338,9 @@ class QData:
             return
         un_re = re_comp(r' exclude(?: and \w+)? tags')
         cls.err = {err for err in cls.err if not un_re.search(err)}
+        
+        exclude = re_sub(r'(\*|\+|\?|\(|\))', r'\\\1', exclude)
+        
         for excl in map(str.strip, exclude.split(',')):
             incompatible = ['add', 'keep', 'search', 'replace']
             cls.test_add(excl, 'exclude', incompatible)
