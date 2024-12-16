@@ -10,5 +10,4 @@ opencv_python_headless
 packaging
 pandas
 Pillow
-tensorflow
 tqdm
