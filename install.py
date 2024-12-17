@@ -30,51 +30,61 @@ def check_rocm_version():
 def install_tensorflow_rocm(version):
     if version.startswith('6.3.'):
         tf_version = '2.17.0'
-        repo_url = 'https://repo.radeon.com/rocm/manylinux/rocm-rel-6.3/tensorflow_rocm-2.17.0-cp310-cp310-manylinux_2_28_x86_64.whl'
-        run(f'"{sys.executable}" -m pip install {repo_url}',
-            f"Installing tensorflow-rocm {tf_version} for ROCm {version} from {repo_url}.",
-            f"Couldn't install tensorflow-rocm {tf_version}.")
+        ort_version = '1.19.0'
+        tf_url = 'https://repo.radeon.com/rocm/manylinux/rocm-rel-6.3/tensorflow_rocm-2.17.0-cp310-cp310-manylinux_2_28_x86_64.whl'
+        ort_url = 'https://repo.radeon.com/rocm/manylinux/rocm-rel-6.3/onnxruntime_rocm-1.19.0-cp310-cp310-linux_x86_64.whl'
+        run(f'"{sys.executable}" -m pip install {tf_url} {ort_url}',
+            f"Installing tensorflow-rocm {tf_version} for ROCm {version} from {tf_version} and onnxruntime-rocm for ROCm {version} from {ort_version}.",
+            f"Couldn't install tensorflow-rocm {tf_version} or onnxruntime-rocm {ort_version}.")
+        return 1
     elif version.startswith('6.2.'):
         tf_version = '2.16.1'
-        repo_url = 'https://repo.radeon.com/rocm/manylinux/rocm-rel-6.2/tensorflow_rocm-2.16.1-cp310-cp310-manylinux_2_28_x86_64.whl'
-        run(f'"{sys.executable}" -m pip install {repo_url}',
-            f"Installing tensorflow-rocm {tf_version} for ROCm {version} from {repo_url}.",
-            f"Couldn't install tensorflow-rocm {tf_version}.")
+        ort_version = '1.18.0'
+        tf_url = 'https://repo.radeon.com/rocm/manylinux/rocm-rel-6.2/tensorflow_rocm-2.16.1-cp310-cp310-manylinux_2_28_x86_64.whl'
+        ort_url = 'https://repo.radeon.com/rocm/manylinux/rocm-rel-6.2/onnxruntime_rocm-1.18.0-cp310-cp310-linux_x86_64.whl'
+        run(f'"{sys.executable}" -m pip install {tf_url} {ort_url}',
+            f"Installing tensorflow-rocm {tf_version} for ROCm {version} from {tf_version} and onnxruntime-rocm for ROCm {version} from {ort_version}.",
+            f"Couldn't install tensorflow-rocm {tf_version} or onnxruntime-rocm {ort_version}.")
+        return 1
     elif version.startswith('6.1.'):
         tf_version = '2.15.0'
-        repo_url = 'https://repo.radeon.com/rocm/manylinux/rocm-rel-6.1/tensorflow_rocm-2.15.0-cp310-cp310-manylinux2014_x86_64.whl'
-        run(f'"{sys.executable}" -m pip install {repo_url}',
-            f"Installing tensorflow-rocm {tf_version} for ROCm {version} from {repo_url}.",
-            f"Couldn't install tensorflow-rocm {tf_version}.")
+        ort_version = '1.17.0'
+        tf_url = 'https://repo.radeon.com/rocm/manylinux/rocm-rel-6.1/tensorflow_rocm-2.15.0-cp310-cp310-manylinux2014_x86_64.whl'
+        ort_url = 'https://repo.radeon.com/rocm/manylinux/rocm-rel-6.1/onnxruntime_rocm-inference-1.17.0-cp310-cp310-linux_x86_64.whl'
+        run(f'"{sys.executable}" -m pip install {tf_url} {ort_url}',
+            f"Installing tensorflow-rocm {tf_version} for ROCm {version} from {tf_version} and onnxruntime-rocm for ROCm {version} from {ort_version}.",
+            f"Couldn't install tensorflow-rocm {tf_version} or onnxruntime-rocm {ort_version}.")
+        return 1
     elif version.startswith('6.0.'):
         tf_version = '2.14.0'
-        run(f'"{sys.executable}" -m pip install tensorflow-rocm=={tf_version}',
-            f"Installing tensorflow-rocm {tf_version} for ROCm {version}.",
-            f"Couldn't install tensorflow-rocm {tf_version}.")
+        run(f'"{sys.executable}" -m pip install tensorflow-rocm=={tf_version} onnxruntime',
+            f"Installing tensorflow-rocm {tf_version} for ROCm {version} and onnxruntime for CPU, because onnxruntime-rocm doesn't support ROCm 6.0.x.",
+            f"Couldn't install tensorflow-rocm {tf_version} or onnxruntime.")
+        return 1
     else:
         print(f"Unsupported ROCm version: {version}. Please upgrade to ROCm 6.0.x, 6.1.x, 6.2.x, or 6.3.x")
-        return None
+        return 0
 
 # Check if the system has an AMD GPU and ROCm installed
 if 'Radeon' in subprocess.run(['lspci'], stdout=subprocess.PIPE, text=True).stdout:
     rocm_version = check_rocm_version()
     if rocm_version:
         result = install_tensorflow_rocm(rocm_version)
-        if result is None:
-            print("Now install tensorflow for CPU instead.")
+        if result == 0:
             # Install tensorflow for CPU
-            run(f'"{sys.executable}" -m pip install tensorflow',
-                f"Installing tensorflow for CPU.",
+            run(f'"{sys.executable}" -m pip install tensorflow onnxruntime',
+                f"Now install tensorflow for CPU instead.",
                 f"Couldn't install tensorflow.")
+        else:
+            print("Successfully installed tensorflow-rocm.")
     else:
         print("Please install ROCm to use AMD GPUs if you want to use GPU acceleration.")
-        print("Now install tensorflow for CPU instead.")
         # Install tensorflow for CPU
-        run(f'"{sys.executable}" -m pip install tensorflow',
-            f"Installing tensorflow for CPU.",
+        run(f'"{sys.executable}" -m pip install tensorflow onnxruntime',
+            f"Now install tensorflow for CPU instead.",
             f"Couldn't install tensorflow.")
 else:
     # Install tensorflow for CUDA
-    run(f'"{sys.executable}" -m pip install tensorflow',
+    run(f'"{sys.executable}" -m pip install tensorflow onnxruntime-gpu',
         f"Installing tensorflow for CUDA.",
         f"Couldn't install tensorflow.")

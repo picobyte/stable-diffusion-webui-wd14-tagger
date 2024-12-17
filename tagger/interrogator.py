@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 import io
 import json
+import re
+import subprocess
 import inspect
 from re import match as re_match
 from platform import system, uname
@@ -27,20 +29,28 @@ use_cpu = ('all' in shared.cmd_opts.use_cpu) or (
 
 # https://onnxruntime.ai/docs/execution-providers/
 # https://github.com/toriato/stable-diffusion-webui-wd14-tagger/commit/e4ec460122cf674bbf984df30cdb10b4370c1224#r92654958
-onnxrt_providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+onnxrt_providers = ['CUDAExecutionProvider', 'ROCMExecutionProvider', 'CPUExecutionProvider']
 
 if shared.cmd_opts.additional_device_ids is not None:
     m = re_match(r'([cg])pu:\d+$', shared.cmd_opts.additional_device_ids)
     if m is None:
         raise ValueError('--device-id is not cpu:<nr> or gpu:<nr>')
     if m.group(1) == 'c':
-        onnxrt_providers.pop(0)
+        onnxrt_providers = onnxrt_providers[2:]
     TF_DEVICE_NAME = f'/{shared.cmd_opts.additional_device_ids}'
 elif use_cpu:
     TF_DEVICE_NAME = '/cpu:0'
-    onnxrt_providers.pop(0)
+    onnxrt_providers = onnxrt_providers[2:]
 else:
     TF_DEVICE_NAME = '/gpu:0'
+
+# Check ROCm installation
+try:
+    rocm_check = subprocess.run(['rocminfo'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
+except FileNotFoundError:
+    rocm_check = 1
+if  rocm_check== 0:
+    onnxrt_providers.pop(0)
 
 print(f'== WD14 tagger {TF_DEVICE_NAME}, {uname()} ==')
 
@@ -347,6 +357,8 @@ def get_onnxrt():
         if not is_installed('onnxruntime'):
             if system() == "Darwin":
                 package_name = "onnxruntime-silicon"
+            elif rocm_check == 0:
+                package_name = "https://repo.radeon.com/rocm/manylinux/rocm-rel-6.3/onnxruntime_rocm-1.19.0-cp310-cp310-linux_x86_64.whl"
             else:
                 package_name = "onnxruntime-gpu"
             package = os.environ.get(
